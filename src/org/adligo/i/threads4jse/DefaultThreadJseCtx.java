@@ -7,8 +7,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.adligo.i.threads.DefaultThreadCtx;
-
 /**
  * This interface provides the defaults for {@link I_ThreadJseCtx }<br/>
  *  <br/>
@@ -34,7 +32,7 @@ import org.adligo.i.threads.DefaultThreadCtx;
  * limitations under the License.
  * </code></pre>
  */
-public interface DefaultThreadJseCtx extends DefaultThreadCtx, I_ThreadJseCtx {
+public interface DefaultThreadJseCtx extends I_ThreadJseCtx {
   static final AtomicReference<ExecutorService> DEFAULT = new AtomicReference<>();
   
   @Override
