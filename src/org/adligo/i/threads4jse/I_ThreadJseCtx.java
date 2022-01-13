@@ -11,11 +11,12 @@ import org.adligo.i.threads.I_ThreadCtx;
 /**
  * This interface contains adaptor methods for basic threading used by JSE Like
  * all of Adligo's Ctx (Context) classes this provides a way to stub out the
- * creation of various methods using mockito_ext.adligo.org.
+ * creation of various methods using;
+ * {@link <a href="https://github.com/adligo/mockito_ext.adligo.org">mockito_ext.adligo.org</a>}.<br/><br/>
  * 
  * @author scott
  *
- * 
+ * <pre><code>
  *         ---------------- Apache ICENSE-2.0 --------------------------
  *
  *         Copyright 2022 Adligo Inc
@@ -31,6 +32,7 @@ import org.adligo.i.threads.I_ThreadCtx;
  *         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
  *         implied. See the License for the specific language governing
  *         permissions and limitations under the License.
+ *         </code></pre>
  */
 public interface I_ThreadJseCtx extends I_ThreadCtx {
 
