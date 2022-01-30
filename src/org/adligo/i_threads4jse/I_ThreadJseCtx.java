@@ -1,4 +1,4 @@
-package org.adligo.i.threads4jse;
+package org.adligo.i_threads4jse;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -6,7 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
-import org.adligo.i.threads.I_ThreadCtx;
+import org.adligo.i_threads.I_ThreadCtx;
 
 /**
  * This interface contains adaptor methods for basic threading used by JSE Like
