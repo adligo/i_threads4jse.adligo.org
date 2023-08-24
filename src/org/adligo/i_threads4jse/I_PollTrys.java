@@ -62,4 +62,12 @@ public interface I_PollTrys {
     return TimeUnit.MILLISECONDS;
   }
   
+  
+  /**
+   * If this polling should continue forever.
+   * @return
+   */
+  default boolean isForever() {
+    return false;
+  }
 }

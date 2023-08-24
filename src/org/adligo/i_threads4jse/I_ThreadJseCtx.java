@@ -145,11 +145,31 @@ public interface I_ThreadJseCtx extends I_ThreadCtx, I_PollTrys {
   }
   
   /**
+   * Effectivly this is the same as a synchronized block, however it plays nicer
+   * with VirtualThreads (as far as I can from JFR tell no pinning of the Virutal
+   * Threads).
+   * 
+   * @param condition the check to see if the runner ran
+   * @param forever if this should loop forever until 
+   *   it accquires the lock and completes the task.
+   * @param lock the lock that performs the synchronization
+   * @param runner the code to run
+   */
+  default void synchronize(Supplier<Boolean> condition, 
+      boolean forever, ReentrantLock lock, Runnable runner) {
+    synchronize(condition, new I_PollTrys() {
+      public boolean isForever() { return forever; }
+    }, lock, runner);
+  }
+  
+  /**
    * Effectivly this is the same as a synchronized block,
    * however it plays nicer with VirtualThreads 
    * (as far as I can from JFR
    * tell no pinning of the Virutal Threads).
    * @param condition the check to see if the runner ran
+   * @param forever if this should loop forever until 
+   *   it accquires the lock and completes the task.
    * @param pollTrys the settings for the polling of the 
    *    lock's tryLock method, note you can use the 
    *    above method which passes this context in
@@ -181,21 +201,31 @@ public interface I_ThreadJseCtx extends I_ThreadCtx, I_PollTrys {
   default void synchronize(Supplier<Boolean> condition, 
     I_PollTrys pollTrys, ReentrantLock lock, Runnable runner,
     I_ThreadCtx ctx) {
-    for (int i=0; i <= pollTrys.getTimes(); i++){
-      if (!condition.get()) {
-        break;
-      } else {
-        try {
-          if (lock.tryLock(pollTrys.getTimeout(), 
-              pollTrys.getTimeUnit())) {
-            try {
-              runner.run();
-            } finally {
-              lock.unlock();
-            }
+    
+    Runnable work = () -> {
+      try {
+        if (lock.tryLock(pollTrys.getTimeout(), 
+            pollTrys.getTimeUnit())) {
+          try {
+            runner.run();
+          } finally {
+            lock.unlock();
           }
-        } catch (InterruptedException x) {
-          ctx.toggleInterruptFlag();
+        }
+      } catch (InterruptedException x) {
+        ctx.toggleInterruptFlag();
+      }
+    };
+    if (pollTrys.isForever()) {
+      while (condition.get()) {
+        work.run();
+      }
+    } else {
+      for (int i=0; i <= pollTrys.getTimes(); i++){
+        if (!condition.get()) {
+          break;
+        } else {
+          work.run();
         }
       }
     }
