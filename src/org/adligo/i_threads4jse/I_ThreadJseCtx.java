@@ -5,18 +5,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 import org.adligo.i_threads.I_ThreadCtx;
 
 /**
  * This interface contains adaptor methods for basic threading used by JSE Like
  * all of Adligo's Ctx (Context) classes this provides a way to stub out the
- * creation of various methods using;
- * {@link <a href="https://github.com/adligo/mockito_ext.adligo.org">mockito_ext.adligo.org</a>}.<br/><br/>
+ * creation of various methods using; {@link <a href=
+ * "https://github.com/adligo/mockito_ext.adligo.org">mockito_ext.adligo.org</a>}.<br/>
+ * <br/>
  * 
  * @author scott
  *
- * <pre><code>
+ *         <pre>
+ * <code>
  *         ---------------- Apache ICENSE-2.0 --------------------------
  *
  *         Copyright 2022 Adligo Inc
@@ -32,9 +37,10 @@ import org.adligo.i_threads.I_ThreadCtx;
  *         WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
  *         implied. See the License for the specific language governing
  *         permissions and limitations under the License.
- *         </code></pre>
+ *         </code>
+ *         </pre>
  */
-public interface I_ThreadJseCtx extends I_ThreadCtx {
+public interface I_ThreadJseCtx extends I_ThreadCtx, I_PollTrys {
 
   /**
    * This should generally return the value from;
@@ -122,5 +128,76 @@ public interface I_ThreadJseCtx extends I_ThreadCtx {
    */
   default ExecutorService newWorkStealingPool(int parallelism) {
     return Executors.newWorkStealingPool(parallelism);
+  }
+
+  /**
+   * Effectivly this is the same as a synchronized block, however it plays nicer
+   * with VirtualThreads (as far as I can from JFR tell no pinning of the Virutal
+   * Threads).
+   * 
+   * @param condition the check to see if the runner ran
+   * @param lock the lock that performs the synchronization
+   * @param runner the code to run
+   */
+  default void synchronize(Supplier<Boolean> condition, 
+      ReentrantLock lock, Runnable runner) {
+    synchronize(condition, this, lock, runner);
+  }
+  
+  /**
+   * Effectivly this is the same as a synchronized block,
+   * however it plays nicer with VirtualThreads 
+   * (as far as I can from JFR
+   * tell no pinning of the Virutal Threads).
+   * @param condition the check to see if the runner ran
+   * @param pollTrys the settings for the polling of the 
+   *    lock's tryLock method, note you can use the 
+   *    above method which passes this context in
+   *    for default settings.
+   * @param lock the lock that performs the synchronization
+   * @param runner the code to run
+   */
+  default void synchronize(Supplier<Boolean> condition, 
+    I_PollTrys pollTrys, ReentrantLock lock, Runnable runner ) {
+    synchronize(condition, this, lock, runner, this);
+  }
+  
+  /**
+   * Effectivly this is the same as a synchronized block,
+   * however it plays nicer with VirtualThreads 
+   * (as far as I can from JFR
+   * tell no pinning of the Virutal Threads).
+   * @param condition the check to see if the runner ran
+   * @param pollTrys the settings for the polling of the 
+   *    lock's tryLock method, note you can use the 
+   *    above method which passes this context in
+   *    for default settings.
+   * @param lock the lock that performs the synchronization
+   * @param runner the code to run
+   * @param the ctx (Context) mixin purly for testing of this method
+   * to check when an InterruptedException is caught that
+   * the interrupted flag is reset correctly on the Thread.
+   */
+  default void synchronize(Supplier<Boolean> condition, 
+    I_PollTrys pollTrys, ReentrantLock lock, Runnable runner,
+    I_ThreadCtx ctx) {
+    for (int i=0; i <= pollTrys.getTimes(); i++){
+      if (!condition.get()) {
+        break;
+      } else {
+        try {
+          if (lock.tryLock(pollTrys.getTimeout(), 
+              pollTrys.getTimeUnit())) {
+            try {
+              runner.run();
+            } finally {
+              lock.unlock();
+            }
+          }
+        } catch (InterruptedException x) {
+          ctx.toggleInterruptFlag();
+        }
+      }
+    }
   }
 }
