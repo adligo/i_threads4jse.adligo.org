@@ -9,6 +9,7 @@ plugins {
   `maven-publish`
   eclipse
   java
+  `java-library`
   signing
 }
 

@@ -9,6 +9,9 @@ import java.util.concurrent.locks.ReentrantLock;
  * it could be used for any polling thing with multiple trys (
  * ArrayBlockingQueue, ReentrantLock, etc).
  * 
+ * Known Implementations
+ * {@linkplain https://github.com/adligo/threads.adligo.org/src/org/adligo/threads/PollTrysMutant.java}
+ * <br/>
  * <br/>
  * 
  * @author scott

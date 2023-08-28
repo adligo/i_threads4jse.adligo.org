@@ -216,6 +216,7 @@ public interface I_ThreadJseCtx extends I_ThreadCtx, I_PollTrys {
         ctx.toggleInterruptFlag();
       }
     };
+    
     if (pollTrys.isForever()) {
       while (condition.get()) {
         work.run();
